@@ -1,0 +1,702 @@
+<!-- I've updated the code with revised, lower initial milk rates, while keeping the side by side layout and all historical data protection features intact. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milk Delivery & Billing Calculator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .master-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .master-grid .card {
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    input, select, button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 130px;
+    }
+
+    input[type="number"] {
+      width: 100px;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    button.danger:hover {
+      background: var(--danger-hover);
+    }
+
+    button.success {
+      background: var(--success);
+    }
+
+    .item-list {
+      list-style: none;
+      margin-top: 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .item-list:empty {
+      display: none;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-item:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .list-item-name {
+      font-weight: 600;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .list-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .list-item-actions input[type="number"] {
+      width: 80px;
+      padding: 4px 8px;
+      font-size: 0.9rem;
+    }
+
+    .list-item-actions button {
+      padding: 4px 10px;
+      font-size: 0.82rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    .total-bar {
+      margin-top: 12px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Milk Delivery & Billing Calculator</h1>
+
+  <!-- Date & Reset Controls -->
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <div class="row" style="margin-bottom: 0;">
+        <label for="datePicker"><strong>Select Date:</strong></label>
+        <input type="date" id="datePicker" />
+      </div>
+      <button class="danger" onclick="resetSelectedDateData()">Reset Selected Date's Data</button>
+    </div>
+    <p class="muted" style="margin-top: 6px;">
+      Rates, milk types, and shop names are snapshotted per saved record so past dates never change when items are edited or deleted later.
+    </p>
+  </div>
+
+  <!-- Side-by-Side Master Data Grid -->
+  <div class="master-grid">
+    <!-- Section 1: Master Milk Types & Rates -->
+    <div class="card">
+      <h2>1. Active Milk Types & Rates (₹ / Litre)</h2>
+      <div class="row">
+        <input type="text" id="newMilkName" placeholder="Milk Name (e.g. Full Cream)" />
+        <input type="number" id="newMilkRate" placeholder="Rate (₹)" step="0.01" min="0" />
+        <button onclick="addMilkType()">Add</button>
+      </div>
+      <ul id="milkTypesList" class="item-list"></ul>
+    </div>
+
+    <!-- Section 2: Master Shops -->
+    <div class="card">
+      <h2>2. Active Shops</h2>
+      <div class="row">
+        <input type="text" id="newShopName" placeholder="Shop Name (e.g. Shop 1)" />
+        <button onclick="addShop()">Add</button>
+      </div>
+      <ul id="shopsList" class="item-list"></ul>
+    </div>
+  </div>
+
+  <!-- Daily Entry Form -->
+  <div class="card">
+    <h2>3. Record Delivery for Selected Date</h2>
+    <div class="row">
+      <label for="shopSelect"><strong>Select Shop:</strong></label>
+      <select id="shopSelect" onchange="renderEntryInputs()"></select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Milk Type</th>
+          <th>Current Rate (₹)</th>
+          <th>Quantity (Litres)</th>
+          <th>Subtotal (₹)</th>
+        </tr>
+      </thead>
+      <tbody id="entryTableBody"></tbody>
+    </table>
+
+    <div class="total-bar">
+      <span>Shop Bill Total: ₹<span id="currentBillTotal">0.00</span></span>
+      <button class="success" onclick="saveDeliveryForShop()">Save Delivery for Shop</button>
+    </div>
+  </div>
+
+  <!-- Saved Daily Records (Historical Snapshot View) -->
+  <div class="card">
+    <h2>4. Saved Deliveries for <span id="displayDateLabel"></span></h2>
+    <div id="savedRecordsContainer"></div>
+    <div class="total-bar">
+      <span>Day Grand Total: ₹<span id="dayGrandTotal">0.00</span></span>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      MILK_TYPES: 'milk_app_master_milk_types',
+      SHOPS: 'milk_app_master_shops',
+      RECORDS: 'milk_app_daily_records'
+    };
+
+    // Initial default rates set lower as requested
+    let masterMilkTypes = JSON.parse(localStorage.getItem(STORAGE_KEYS.MILK_TYPES)) || [
+      { id: 'm1', name: 'Milk Type 1', rate: 50 },
+      { id: 'm2', name: 'Milk Type 2', rate: 55 }
+    ];
+
+    let masterShops = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOPS)) || [
+      { id: 's1', name: 'Shop 1' },
+      { id: 's2', name: 'Shop 2' }
+    ];
+
+    let dailyRecords = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECORDS)) || {};
+
+    const datePicker = document.getElementById('datePicker');
+
+    function init() {
+      const today = new Date().toISOString().split('T')[0];
+      datePicker.value = today;
+      datePicker.addEventListener('change', onDateChange);
+      saveMasterState();
+      renderAll();
+    }
+
+    function saveMasterState() {
+      localStorage.setItem(STORAGE_KEYS.MILK_TYPES, JSON.stringify(masterMilkTypes));
+      localStorage.setItem(STORAGE_KEYS.SHOPS, JSON.stringify(masterShops));
+    }
+
+    function saveRecordsState() {
+      localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(dailyRecords));
+    }
+
+    function onDateChange() {
+      renderAll();
+    }
+
+    // --- MASTER MILK TYPES MANAGEMENT ---
+    function addMilkType() {
+      const nameInput = document.getElementById('newMilkName');
+      const rateInput = document.getElementById('newMilkRate');
+      const name = nameInput.value.trim();
+      const rate = parseFloat(rateInput.value);
+
+      if (!name || isNaN(rate) || rate < 0) {
+        alert('Please enter a valid milk name and rate.');
+        return;
+      }
+
+      masterMilkTypes.push({
+        id: 'm_' + Date.now(),
+        name,
+        rate
+      });
+
+      nameInput.value = '';
+      rateInput.value = '';
+      saveMasterState();
+      renderAll();
+    }
+
+    function updateMilkRate(id, newRateStr) {
+      const newRate = parseFloat(newRateStr);
+      if (isNaN(newRate) || newRate < 0) return;
+
+      const milk = masterMilkTypes.find(m => m.id === id);
+      if (milk) {
+        milk.rate = newRate;
+        saveMasterState();
+        renderEntryInputs();
+      }
+    }
+
+    function deleteMilkType(id) {
+      const milk = masterMilkTypes.find(m => m.id === id);
+      if (!milk) return;
+
+      const confirmed = confirm(
+        `Are you sure you want to delete "${milk.name}"?\nPast saved records will retain this milk type.`
+      );
+      if (!confirmed) return;
+
+      masterMilkTypes = masterMilkTypes.filter(m => m.id !== id);
+      saveMasterState();
+      renderAll();
+    }
+
+    // --- MASTER SHOPS MANAGEMENT ---
+    function addShop() {
+      const nameInput = document.getElementById('newShopName');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        alert('Please enter a valid shop name.');
+        return;
+      }
+
+      masterShops.push({
+        id: 's_' + Date.now(),
+        name
+      });
+
+      nameInput.value = '';
+      saveMasterState();
+      renderAll();
+    }
+
+    function deleteShop(id) {
+      const shop = masterShops.find(s => s.id === id);
+      if (!shop) return;
+
+      const confirmed = confirm(
+        `Are you sure you want to delete "${shop.name}"?\nPast saved records for this shop will remain intact.`
+      );
+      if (!confirmed) return;
+
+      masterShops = masterShops.filter(s => s.id !== id);
+      saveMasterState();
+      renderAll();
+    }
+
+    // --- RENDERING UI ---
+    function renderAll() {
+      document.getElementById('displayDateLabel').textContent = datePicker.value;
+      renderMasterMilkTypes();
+      renderMasterShops();
+      renderShopDropdown();
+      renderEntryInputs();
+      renderSavedRecords();
+    }
+
+    function renderMasterMilkTypes() {
+      const container = document.getElementById('milkTypesList');
+      container.innerHTML = '';
+
+      masterMilkTypes.forEach((milk, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.innerHTML = `
+          <span class="list-item-name">${index + 1}. ${escapeHtml(milk.name)}</span>
+          <div class="list-item-actions">
+            <span>₹</span>
+            <input
+              type="number"
+              value="${milk.rate}"
+              step="0.01"
+              min="0"
+              aria-label="Rate for ${escapeHtml(milk.name)}"
+              onchange="updateMilkRate('${milk.id}', this.value)"
+            />
+            <button class="danger" onclick="deleteMilkType('${milk.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(li);
+      });
+    }
+
+    function renderMasterShops() {
+      const container = document.getElementById('shopsList');
+      container.innerHTML = '';
+
+      masterShops.forEach((shop, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.innerHTML = `
+          <span class="list-item-name">${index + 1}. ${escapeHtml(shop.name)}</span>
+          <div class="list-item-actions">
+            <button class="danger" onclick="deleteShop('${shop.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(li);
+      });
+    }
+
+    function renderShopDropdown() {
+      const select = document.getElementById('shopSelect');
+      const previousSelection = select.value;
+      select.innerHTML = '';
+
+      if (masterShops.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- No Active Shops --';
+        select.appendChild(opt);
+        return;
+      }
+
+      masterShops.forEach(shop => {
+        const opt = document.createElement('option');
+        opt.value = shop.id;
+        opt.textContent = shop.name;
+        select.appendChild(opt);
+      });
+
+      if (masterShops.some(s => s.id === previousSelection)) {
+        select.value = previousSelection;
+      }
+    }
+
+    function renderEntryInputs() {
+      const tbody = document.getElementById('entryTableBody');
+      const selectedDate = datePicker.value;
+      const selectedShopId = document.getElementById('shopSelect').value;
+      tbody.innerHTML = '';
+
+      if (!selectedShopId || masterMilkTypes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="muted">Add at least one active shop and milk type to record deliveries.</td></tr>`;
+        document.getElementById('currentBillTotal').textContent = '0.00';
+        return;
+      }
+
+      const existingShopRecord = dailyRecords[selectedDate]?.[selectedShopId];
+
+      masterMilkTypes.forEach(milk => {
+        const savedItem = existingShopRecord?.items?.find(i => i.milkId === milk.id);
+        const qty = savedItem ? savedItem.qty : 0;
+        const subtotal = qty * milk.rate;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(milk.name)}</td>
+          <td>₹${milk.rate.toFixed(2)}</td>
+          <td>
+            <input
+              type="number"
+              class="qty-input"
+              data-milk-id="${milk.id}"
+              data-milk-name="${escapeHtml(milk.name)}"
+              data-milk-rate="${milk.rate}"
+              value="${qty}"
+              min="0"
+              step="0.1"
+              oninput="recalculateEntryBill()"
+            />
+          </td>
+          <td class="row-subtotal">₹${subtotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      recalculateEntryBill();
+    }
+
+    function recalculateEntryBill() {
+      const inputs = document.querySelectorAll('.qty-input');
+      let total = 0;
+
+      inputs.forEach(input => {
+        const rate = parseFloat(input.dataset.milkRate) || 0;
+        const qty = parseFloat(input.value) || 0;
+        const sub = rate * qty;
+        total += sub;
+
+        const rowSubtotalCell = input.closest('tr').querySelector('.row-subtotal');
+        if (rowSubtotalCell) {
+          rowSubtotalCell.textContent = `₹${sub.toFixed(2)}`;
+        }
+      });
+
+      document.getElementById('currentBillTotal').textContent = total.toFixed(2);
+    }
+
+    // --- SAVING SNAPSHOT TO HISTORICAL RECORD ---
+    function saveDeliveryForShop() {
+      const selectedDate = datePicker.value;
+      const selectedShopId = document.getElementById('shopSelect').value;
+      const shopObj = masterShops.find(s => s.id === selectedShopId);
+
+      if (!selectedDate || !shopObj) {
+        alert('Please select a valid date and active shop.');
+        return;
+      }
+
+      const inputs = document.querySelectorAll('.qty-input');
+      const itemsSnapshot = [];
+      let shopTotal = 0;
+
+      inputs.forEach(input => {
+        const qty = parseFloat(input.value) || 0;
+        if (qty > 0) {
+          const rate = parseFloat(input.dataset.milkRate);
+          const itemTotal = qty * rate;
+          shopTotal += itemTotal;
+
+          itemsSnapshot.push({
+            milkId: input.dataset.milkId,
+            milkName: input.dataset.milkName,
+            rate: rate,
+            qty: qty,
+            total: itemTotal
+          });
+        }
+      });
+
+      if (!dailyRecords[selectedDate]) {
+        dailyRecords[selectedDate] = {};
+      }
+
+      if (itemsSnapshot.length === 0) {
+        delete dailyRecords[selectedDate][selectedShopId];
+      } else {
+        dailyRecords[selectedDate][selectedShopId] = {
+          shopId: shopObj.id,
+          shopName: shopObj.name,
+          items: itemsSnapshot,
+          shopTotal: shopTotal
+        };
+      }
+
+      saveRecordsState();
+      renderSavedRecords();
+      alert(`Saved delivery for ${shopObj.name} on ${selectedDate}.`);
+    }
+
+    // --- RENDER HISTORICAL SNAPSHOTS ---
+    function renderSavedRecords() {
+      const container = document.getElementById('savedRecordsContainer');
+      const selectedDate = datePicker.value;
+      const recordsForDate = dailyRecords[selectedDate] || {};
+      const shopIds = Object.keys(recordsForDate);
+
+      container.innerHTML = '';
+      let grandTotal = 0;
+
+      if (shopIds.length === 0) {
+        container.innerHTML = `<p class="muted">No deliveries saved for ${selectedDate}.</p>`;
+        document.getElementById('dayGrandTotal').textContent = '0.00';
+        return;
+      }
+
+      shopIds.forEach(shopId => {
+        const record = recordsForDate[shopId];
+        grandTotal += record.shopTotal;
+
+        const block = document.createElement('div');
+        block.style.marginBottom = '14px';
+
+        let rowsHtml = record.items.map(item => `
+          <tr>
+            <td>${escapeHtml(item.milkName)}</td>
+            <td>₹${item.rate.toFixed(2)}</td>
+            <td>${item.qty} L</td>
+            <td>₹${item.total.toFixed(2)}</td>
+          </tr>
+        `).join('');
+
+        block.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong>Shop: ${escapeHtml(record.shopName)}</strong>
+            <button class="danger" style="padding:3px 8px; font-size:0.8rem;" onclick="deleteSavedShopRecord('${selectedDate}', '${shopId}')">Remove Entry</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Milk Type (Saved)</th>
+                <th>Locked Rate</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+              <tr>
+                <td colspan="3" style="text-align:right;"><strong>Shop Total:</strong></td>
+                <td><strong>₹${record.shopTotal.toFixed(2)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        container.appendChild(block);
+      });
+
+      document.getElementById('dayGrandTotal').textContent = grandTotal.toFixed(2);
+    }
+
+    function deleteSavedShopRecord(date, shopId) {
+      const record = dailyRecords[date]?.[shopId];
+      if (!record) return;
+
+      if (!confirm(`Remove saved delivery record for "${record.shopName}" on ${date}?`)) {
+        return;
+      }
+
+      delete dailyRecords[date][shopId];
+      saveRecordsState();
+      renderEntryInputs();
+      renderSavedRecords();
+    }
+
+    function resetSelectedDateData() {
+      const selectedDate = datePicker.value;
+      if (!confirm(`Reset all saved delivery records for ${selectedDate}? Other dates will not be affected.`)) {
+        return;
+      }
+
+      delete dailyRecords[selectedDate];
+      saveRecordsState();
+      renderEntryInputs();
+      renderSavedRecords();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    init();
+  </script>
+</body>
+</html>
