@@ -1,64 +1,83 @@
-<!-- I've updated the code with revised, lower initial milk rates, while keeping the side by side layout and all historical data protection features intact. -->
+<!-- I've updated the CSS to significantly improve the user interface on Android smartphones. The layout now adapts cleanly, stacking the master lists on mobile while preserving the side by side view on desktops, with enhanced touch targets and optimized typography. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#2563eb" />
   <title>Milk Delivery & Billing Calculator</title>
   <style>
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
+      --primary-active: #1e40af;
       --danger: #dc2626;
       --danger-hover: #b91c1c;
       --success: #16a34a;
-      --bg: #f8fafc;
+      --success-hover: #15803d;
+      --bg: #f1f5f9;
       --card: #ffffff;
-      --border: #e2e8f0;
+      --surface-alt: #f8fafc;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
       --text: #0f172a;
-      --muted: #64748b;
+      --muted: #475569;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --touch-target: 44px;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
       padding: 16px;
-      max-width: 960px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      max-width: 980px;
       margin: 0 auto;
+      line-height: 1.45;
+      font-variant-numeric: tabular-nums;
     }
 
     h1 {
-      font-size: 1.5rem;
+      font-size: clamp(1.35rem, 4vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
       margin-bottom: 16px;
       text-align: center;
+      color: var(--text);
     }
 
     h2 {
-      font-size: 1.1rem;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 8px;
+      color: var(--text);
     }
 
     .card {
       background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 18px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: var(--shadow-sm);
     }
 
+    /* Side-by-side on desktop/tablet, single column on Android phones */
     .master-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
       margin-bottom: 16px;
     }
@@ -71,39 +90,71 @@
 
     .row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
-    input, select, button {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
+    label {
       font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    /* 16px font-size prevents Android/iOS input auto-zoom; 44px height ensures accessible touch targets */
+    input, select, button {
+      min-height: var(--touch-target);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      font-size: 16px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.08s ease;
+    }
+
+    input, select {
+      background-color: #ffffff;
+      color: var(--text);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
     }
 
     input[type="text"] {
       flex: 1;
-      min-width: 130px;
+      min-width: 140px;
     }
 
     input[type="number"] {
-      width: 100px;
+      width: 105px;
+    }
+
+    input[type="date"], select {
+      min-width: 165px;
     }
 
     button {
       background: var(--primary);
-      color: #fff;
+      color: #ffffff;
       border: none;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
     }
 
     button:hover {
       background: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+      background: var(--primary-active);
     }
 
     button.danger {
@@ -118,11 +169,15 @@
       background: var(--success);
     }
 
+    button.success:hover {
+      background: var(--success-hover);
+    }
+
     .item-list {
       list-style: none;
-      margin-top: 4px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      margin-top: 6px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
       overflow: hidden;
     }
 
@@ -135,10 +190,10 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px;
+      padding: 10px 12px;
       background: #ffffff;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.92rem;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.96rem;
     }
 
     .list-item:last-child {
@@ -146,7 +201,7 @@
     }
 
     .list-item:nth-child(even) {
-      background: #f8fafc;
+      background: var(--surface-alt);
     }
 
     .list-item-name {
@@ -158,49 +213,163 @@
     .list-item-actions {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .list-item-actions input[type="number"] {
-      width: 80px;
-      padding: 4px 8px;
-      font-size: 0.9rem;
+      width: 84px;
+      min-height: 40px;
+      padding: 6px 8px;
+      font-size: 16px;
+      text-align: right;
     }
 
     .list-item-actions button {
-      padding: 4px 10px;
-      font-size: 0.82rem;
+      min-height: 40px;
+      padding: 6px 12px;
+      font-size: 0.88rem;
     }
 
+    /* Tables with smooth horizontal scroll support on narrow screens */
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
+      border-radius: var(--radius-md);
+      overflow: hidden;
     }
 
     th, td {
-      border: 1px solid var(--border);
-      padding: 8px 10px;
+      border: 1px solid var(--border-light);
+      padding: 10px 12px;
       text-align: left;
+      vertical-align: middle;
     }
 
     th {
-      background: #f1f5f9;
+      background: var(--surface-alt);
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td input.qty-input {
+      width: 100%;
+      min-width: 76px;
+      max-width: 110px;
+      min-height: 42px;
+      padding: 6px 10px;
+      font-size: 16px;
+      font-weight: 600;
     }
 
     .total-bar {
-      margin-top: 12px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
       font-weight: 700;
-      font-size: 1.05rem;
+      font-size: 1.12rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .muted {
       color: var(--muted);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
+    }
+
+    /* Mobile Smartphone Breakpoint (Android Portrait & Small Screens) */
+    @media (max-width: 680px) {
+      body {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+
+      .master-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      /* Date & Reset header bar stacks cleanly */
+      .card > .row:first-child {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .card > .row:first-child .row {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .card > .row:first-child input[type="date"],
+      .card > .row:first-child button.danger {
+        width: 100%;
+      }
+
+      /* Add Milk & Add Shop inputs wrap cleanly with full-width primary action */
+      .master-grid .row input[type="text"] {
+        flex: 1 1 100%;
+        width: 100%;
+      }
+
+      .master-grid .row input[type="number"] {
+        flex: 1 1 45%;
+        width: auto;
+      }
+
+      .master-grid .row button {
+        flex: 1 1 45%;
+        width: auto;
+      }
+
+      /* Shop selector full width on mobile */
+      #shopSelect {
+        width: 100%;
+        flex: 1 1 100%;
+      }
+
+      /* Compact table padding + horizontal scroll safety */
+      table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+      }
+
+      th, td {
+        padding: 9px 8px;
+        font-size: 0.9rem;
+      }
+
+      /* Full-width Save button on mobile */
+      .total-bar {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+
+      .total-bar button {
+        width: 100%;
+      }
+
+      /* Saved record card header button touch target */
+      #savedRecordsContainer button.danger {
+        min-height: 36px !important;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+      }
     }
   </style>
 </head>
@@ -288,7 +457,6 @@
       RECORDS: 'milk_app_daily_records'
     };
 
-    // Initial default rates set lower as requested
     let masterMilkTypes = JSON.parse(localStorage.getItem(STORAGE_KEYS.MILK_TYPES)) || [
       { id: 'm1', name: 'Milk Type 1', rate: 50 },
       { id: 'm2', name: 'Milk Type 2', rate: 55 }
